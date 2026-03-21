@@ -102,9 +102,12 @@ in let
   cleanedSource = haskellLib.cleanSourceWith {
     name = if name != null then "${name}-root-cabal-files" else "source-root-cabal-files";
     src = evalSrc.origSrc or evalSrc;
-    filter = path: type: (!(evalSrc ? filter) || evalSrc.filter path type) && (
+    filter = path: type:
+      let rootProjectFile = toString (evalSrc.origSrc or evalSrc) + subDir' + "/${cabalProjectFileName}";
+      in (!(evalSrc ? filter) || evalSrc.filter path type) && (
       type == "directory" ||
-      pkgs.lib.any (i: (pkgs.lib.hasSuffix i path)) [ ".cabal" "package.yaml" ]); };
+      pkgs.lib.any (i: (pkgs.lib.hasSuffix i path)) [ ".cabal" "package.yaml" ] ||
+      (pkgs.lib.hasSuffix ".project" path && path != rootProjectFile)); };
 
   # When there is no `cabal.project` file `cabal-install` behaves as if there was
   # one containing `packages: ./*.cabal`.  Even if there is a `cabal.project.local`
